@@ -1,8 +1,6 @@
 import javax.swing.*;
-/**
- *
- * @author tony
- */
+
+
 public class Main {
     public static void main(String[] args) {
         // Ejecutar en el Event Dispatch Thread
