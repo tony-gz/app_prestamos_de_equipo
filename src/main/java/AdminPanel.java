@@ -37,13 +37,29 @@ public class AdminPanel extends JFrame {
     }
 
     // Fuentes del sistema
+    // También agregar la clase AppFonts responsive al AdminPanel:
     private static class AppFonts {
-        public static final Font TITLE = new Font("Segoe UI", Font.BOLD, 24);
-        public static final Font SUBTITLE = new Font("Segoe UI", Font.BOLD, 16);
-        public static final Font BODY = new Font("Segoe UI", Font.PLAIN, 13);
-        public static final Font CAPTION = new Font("Segoe UI", Font.PLAIN, 11);
-        public static final Font BUTTON = new Font("Segoe UI", Font.BOLD, 13);
-        public static final Font LABEL = new Font("Segoe UI", Font.BOLD, 12);
+        // Tamaños base de fuente
+        private static final int BASE_TITLE = 24;
+        private static final int BASE_SUBTITLE = 16;
+        private static final int BASE_BODY = 13;
+        private static final int BASE_CAPTION = 11;
+        private static final int BASE_BUTTON = 13;
+        private static final int BASE_LABEL = 12;
+
+        // Fuentes escaladas dinámicamente
+        public static final Font TITLE = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_TITLE));
+        public static final Font SUBTITLE = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_SUBTITLE));
+        public static final Font BODY = new Font("Segoe UI", Font.PLAIN,
+                ScreenUtils.getScaledFontSize(BASE_BODY));
+        public static final Font CAPTION = new Font("Segoe UI", Font.PLAIN,
+                ScreenUtils.getScaledFontSize(BASE_CAPTION));
+        public static final Font BUTTON = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_BUTTON));
+        public static final Font LABEL = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_LABEL));
     }
 
     private JTable tablaPrestamos;
@@ -87,8 +103,11 @@ public class AdminPanel extends JFrame {
         configurarEventos();
         cargarDatos();
         configurarTimeoutInactividad();
-        setSize(1200, 700);
-        setResizable(false);
+
+        // Configuración responsive de la ventana
+        // 80% ancho, 75% alto de la pantalla, mínimo 70% ancho, 65% alto
+        ScreenUtils.setupResponsiveWindow(this, 0.80, 0.75, 0.70, 0.65);
+
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 

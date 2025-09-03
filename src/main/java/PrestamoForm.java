@@ -32,14 +32,29 @@ public class PrestamoForm extends JPanel {
         public static final Color ERROR_BG = new Color(254, 242, 242);     // Rojo muy claro
     }
 
-    // Clase interna para fuentes
+    // Clase interna para fuentes (version responsive)
     private static class AppFonts {
-        public static final Font TITLE = new Font("Segoe UI", Font.BOLD, 28); // era 24
-        public static final Font SUBTITLE = new Font("Segoe UI", Font.BOLD, 16); // era 14
-        public static final Font BODY = new Font("Segoe UI", Font.PLAIN, 15); // era 13
-        public static final Font CAPTION = new Font("Segoe UI", Font.PLAIN, 13); // era 11
-        public static final Font BUTTON = new Font("Segoe UI", Font.BOLD, 15); // era 13
-        public static final Font LABEL = new Font("Segoe UI", Font.BOLD, 14); // era 12
+        // Tamaños base de fuente
+        private static final int BASE_TITLE = 28;
+        private static final int BASE_SUBTITLE = 16;
+        private static final int BASE_BODY = 15;
+        private static final int BASE_CAPTION = 13;
+        private static final int BASE_BUTTON = 15;
+        private static final int BASE_LABEL = 14;
+
+        // Fuentes escaladas dinámicamente
+        public static final Font TITLE = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_TITLE));
+        public static final Font SUBTITLE = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_SUBTITLE));
+        public static final Font BODY = new Font("Segoe UI", Font.PLAIN,
+                ScreenUtils.getScaledFontSize(BASE_BODY));
+        public static final Font CAPTION = new Font("Segoe UI", Font.PLAIN,
+                ScreenUtils.getScaledFontSize(BASE_CAPTION));
+        public static final Font BUTTON = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_BUTTON));
+        public static final Font LABEL = new Font("Segoe UI", Font.BOLD,
+                ScreenUtils.getScaledFontSize(BASE_LABEL));
     }
 
     // Iconos Unicode
@@ -73,6 +88,7 @@ public class PrestamoForm extends JPanel {
     public PrestamoForm(JFrame parent) {
         this.parentFrame = parent;
         inicializarComponentes();
+        configurarPanelesResponsive();
         configurarLayout();
         configurarEventos();
         configurarValidacion();
@@ -200,43 +216,43 @@ public class PrestamoForm extends JPanel {
         statusPanel.add(lblStatus, BorderLayout.CENTER);
     }
 
-    private JTextField crearCampoTextoEstilizado(int columnas) {
-        JTextField campo = new JTextField(columnas);
-        campo.setFont(AppFonts.BODY);
-        campo.setBorder(new CompoundBorder(
-                new LineBorder(AppColors.BORDER, 1, true),
-                new EmptyBorder(6, 10, 6, 10)
-        ));
-        campo.setBackground(AppColors.SURFACE);
-        campo.setPreferredSize(new Dimension(300, 42));
-        return campo;
-    }
+//    private JTextField crearCampoTextoEstilizado(int columnas) {
+//        JTextField campo = new JTextField(columnas);
+//        campo.setFont(AppFonts.BODY);
+//        campo.setBorder(new CompoundBorder(
+//                new LineBorder(AppColors.BORDER, 1, true),
+//                new EmptyBorder(6, 10, 6, 10)
+//        ));
+//        campo.setBackground(AppColors.SURFACE);
+//        campo.setPreferredSize(new Dimension(300, 42));
+//        return campo;
+//    }
 
-    private JButton crearBotonPrincipal(String texto, Color color) {
-        JButton boton = new JButton(texto);
-        boton.setFont(AppFonts.BUTTON);
-        boton.setBackground(color);
-        boton.setForeground(Color.WHITE);
-        boton.setPreferredSize(new Dimension(280, 52));
-        boton.setBorder(new EmptyBorder(10, 20, 15, 20));
-        boton.setFocusPainted(false);
-        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // Efecto hover
-        boton.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                boton.setBackground(color.darker());
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                boton.setBackground(color);
-            }
-        });
-
-        return boton;
-    }
+//    private JButton crearBotonPrincipal(String texto, Color color) {
+//        JButton boton = new JButton(texto);
+//        boton.setFont(AppFonts.BUTTON);
+//        boton.setBackground(color);
+//        boton.setForeground(Color.WHITE);
+//        boton.setPreferredSize(new Dimension(280, 52));
+//        boton.setBorder(new EmptyBorder(10, 20, 15, 20));
+//        boton.setFocusPainted(false);
+//        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+//
+//        // Efecto hover
+//        boton.addMouseListener(new java.awt.event.MouseAdapter() {
+//            @Override
+//            public void mouseEntered(java.awt.event.MouseEvent e) {
+//                boton.setBackground(color.darker());
+//            }
+//
+//            @Override
+//            public void mouseExited(java.awt.event.MouseEvent e) {
+//                boton.setBackground(color);
+//            }
+//        });
+//
+//        return boton;
+//    }
 
     private JButton crearBotonSecundario(String texto, Color color) {
         JButton boton = new JButton(texto);
@@ -998,5 +1014,100 @@ public class PrestamoForm extends JPanel {
                 actualizarEquiposDisponibles();
             }
         });
+    }
+
+
+
+    // Agregar estos métodos a PrestamoForm.java para hacer componentes responsive:
+
+    private Dimension getResponsiveSize(int baseWidth, int baseHeight) {
+        double scaleFactor = ScreenUtils.getScaleFactor();
+        Dimension screenSize = ScreenUtils.getScreenSize();
+
+        // Calcular tamaño basado en porcentaje de pantalla y factor de escala
+        int width = Math.max(baseWidth, (int)(baseWidth * Math.sqrt(scaleFactor)));
+        int height = Math.max(baseHeight, (int)(baseHeight * Math.sqrt(scaleFactor)));
+
+        // Limitar al tamaño de pantalla disponible
+        width = Math.min(width, screenSize.width / 4);
+        height = Math.min(height, screenSize.height / 15);
+
+        return new Dimension(width, height);
+    }
+
+    private JTextField crearCampoTextoEstilizado(int columnas) {
+        JTextField campo = new JTextField(columnas);
+        campo.setFont(AppFonts.BODY);
+        campo.setBorder(new CompoundBorder(
+                new LineBorder(AppColors.BORDER, 1, true),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+        campo.setBackground(AppColors.SURFACE);
+
+        // Tamaño responsive
+        Dimension size = getResponsiveSize(300, 42);
+        campo.setPreferredSize(size);
+        campo.setMinimumSize(new Dimension(250, 35));
+
+        return campo;
+    }
+
+    private JButton crearBotonPrincipal(String texto, Color color) {
+        JButton boton = new JButton(texto);
+        boton.setFont(AppFonts.BUTTON);
+        boton.setBackground(color);
+        boton.setForeground(Color.WHITE);
+
+        // Tamaño responsive
+        Dimension size = getResponsiveSize(280, 52);
+        boton.setPreferredSize(size);
+        boton.setMinimumSize(new Dimension(200, 40));
+
+        boton.setBorder(new EmptyBorder(10, 20, 15, 20));
+        boton.setFocusPainted(false);
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Efecto hover
+        boton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                boton.setBackground(color.darker());
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                boton.setBackground(color);
+            }
+        });
+
+        return boton;
+    }
+
+    private void configurarPanelesResponsive() {
+        Dimension screenSize = ScreenUtils.getScreenSize();
+        double scaleFactor = ScreenUtils.getScaleFactor();
+
+        // Ajustar tamaños de paneles basado en el tamaño de pantalla
+        int panelWidth = Math.max(380, (int)(screenSize.width * 0.3));
+        int laptopPanelHeight = Math.max(90, (int)(110 * Math.sqrt(scaleFactor)));
+        int projectorPanelHeight = Math.max(90, (int)(110 * Math.sqrt(scaleFactor)));
+        int speakerPanelHeight = Math.max(45, (int)(55 * Math.sqrt(scaleFactor)));
+
+        // Configurar panel de laptops
+        laptopsPanel.setPreferredSize(new Dimension(panelWidth, laptopPanelHeight));
+        laptopsPanel.setMinimumSize(new Dimension(300, 80));
+
+        // Configurar panel de proyectores
+        proyectoresPanel.setPreferredSize(new Dimension(panelWidth, projectorPanelHeight));
+        proyectoresPanel.setMinimumSize(new Dimension(300, 80));
+
+        // Configurar panel de bocinas
+        bocinasPanel.setPreferredSize(new Dimension(panelWidth, speakerPanelHeight));
+        bocinasPanel.setMinimumSize(new Dimension(200, 40));
+
+        // Configurar área de observaciones
+        int textAreaHeight = Math.max(70, (int)(70 * Math.sqrt(scaleFactor)));
+        txtObservaciones.setPreferredSize(new Dimension(280, textAreaHeight));
+        txtObservaciones.setMinimumSize(new Dimension(200, 60));
     }
 }
