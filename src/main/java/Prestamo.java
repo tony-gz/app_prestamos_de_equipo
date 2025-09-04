@@ -1,7 +1,6 @@
 public class Prestamo {
     private int id;
     private String alumnoNombre;
-    private String matricula;
     private String profesorNombre;
     private String equipo; // Ahora puede contener múltiples equipos separados por coma
     private String horaPrestamo;
@@ -15,11 +14,10 @@ public class Prestamo {
     public Prestamo() {}
 
     // Constructor con parámetros principales
-    public Prestamo(String alumnoNombre, String matricula, String profesorNombre,
+    public Prestamo(String alumnoNombre, String profesorNombre,
                     String equipo, String horaPrestamo,
                     String salon, String observaciones) {
         this.alumnoNombre = alumnoNombre;
-        this.matricula = matricula;
         this.profesorNombre = profesorNombre;
         this.equipo = equipo; // Puede ser múltiples equipos separados por coma
         this.horaPrestamo = horaPrestamo;
@@ -34,9 +32,6 @@ public class Prestamo {
 
     public String getAlumnoNombre() { return alumnoNombre; }
     public void setAlumnoNombre(String alumnoNombre) { this.alumnoNombre = alumnoNombre; }
-
-    public String getMatricula() { return matricula; }
-    public void setMatricula(String matricula) { this.matricula = matricula; }
 
     public String getProfesorNombre() { return profesorNombre; }
     public void setProfesorNombre(String profesorNombre) { this.profesorNombre = profesorNombre; }

@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,7 +35,6 @@ public class ConexionDB {
         String sqlPrestamos = "CREATE TABLE IF NOT EXISTS prestamos (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "alumno_nombre TEXT NOT NULL, " +
-                "matricula TEXT, " +
                 "profesor_nombre TEXT NOT NULL, " +
                 "equipos TEXT NOT NULL, " +  // Cambiado para almacenar múltiples equipos
                 "hora_prestamo TEXT NOT NULL, " +
@@ -100,14 +101,14 @@ public class ConexionDB {
                     }
 
                     // Insertar 3 bocinas
-                    for (int i = 1; i <= 3; i++) {
+                    for (int i = 1; i <= 5; i++) {
                         pstmt.setString(1, "bocina");
                         pstmt.setInt(2, i);
                         pstmt.setString(3, "Bocina " + i);
                         pstmt.executeUpdate();
                     }
                 }
-                System.out.println("Equipos iniciales agregados: 7 laptops, 7 proyectores y 3 bocinas");
+                System.out.println("Equipos iniciales agregados: 7 laptops, 7 proyectores y 5 bocinas");
             }
         }
     }
@@ -168,20 +169,22 @@ public class ConexionDB {
     public static List<String> getEquiposDisponibles() {
         List<String> laptops = getEquiposDisponiblesPorTipo("laptop");
         List<String> proyectores = getEquiposDisponiblesPorTipo("proyector");
+        List<String> bocinas = getEquiposDisponiblesPorTipo("bocina");
 
         List<String> todosEquipos = new ArrayList<>();
         todosEquipos.addAll(laptops);
         todosEquipos.addAll(proyectores);
+        todosEquipos.addAll(bocinas);
 
         return todosEquipos;
     }
 
     // Registrar nuevo préstamo con hora y fecha automáticas
     public static boolean registrarPrestamo(Prestamo prestamo) {
-        String sql = "INSERT INTO prestamos (alumno_nombre, matricula, profesor_nombre, " +
+        String sql = "INSERT INTO prestamos (alumno_nombre, profesor_nombre, " +
                 "equipos, hora_prestamo, fecha, " +
                 "salon, observaciones) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -193,13 +196,12 @@ public class ConexionDB {
             DateTimeFormatter fechaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             pstmt.setString(1, prestamo.getAlumnoNombre());
-            pstmt.setString(2, prestamo.getMatricula());
-            pstmt.setString(3, prestamo.getProfesorNombre());
-            pstmt.setString(4, prestamo.getEquipo()); // Ahora puede contener múltiples equipos separados por coma
-            pstmt.setString(5, horaActual.format(horaFormatter));
-            pstmt.setString(6, fechaActual.format(fechaFormatter)); // Usar la fecha actual del sistema
-            pstmt.setString(7, prestamo.getSalon());
-            pstmt.setString(8, prestamo.getObservaciones());
+            pstmt.setString(2, prestamo.getProfesorNombre());
+            pstmt.setString(3, prestamo.getEquipo()); // Ahora puede contener múltiples equipos separados por coma
+            pstmt.setString(4, horaActual.format(horaFormatter));
+            pstmt.setString(5, fechaActual.format(fechaFormatter)); // Usar la fecha actual del sistema
+            pstmt.setString(6, prestamo.getSalon());
+            pstmt.setString(7, prestamo.getObservaciones());
 
             int filasAfectadas = pstmt.executeUpdate();
             return filasAfectadas > 0;
@@ -223,7 +225,6 @@ public class ConexionDB {
                 Prestamo prestamo = new Prestamo();
                 prestamo.setId(rs.getInt("id"));
                 prestamo.setAlumnoNombre(rs.getString("alumno_nombre"));
-                prestamo.setMatricula(rs.getString("matricula"));
                 prestamo.setProfesorNombre(rs.getString("profesor_nombre"));
 
                 // Manejar equipos (puede ser múltiples)
@@ -317,38 +318,116 @@ public class ConexionDB {
         }
     }
 
-    // Método específico para verificar disponibilidad de bocinas - MODIFICADO: Sin filtro de fecha
-    public static boolean bocinasDisponibles() {
-        String sql = "SELECT equipos FROM prestamos WHERE devuelto = 0";
 
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+    private static final String DB_GENERAL_NAME = "prestamos_general.db";
+    private static final String DB_GENERAL_URL = "jdbc:sqlite:" + DB_GENERAL_NAME;
 
-            // Contar cuántas bocinas específicas están prestadas
-            int bocinasOcupadas = 0;
+    private static Connection getGeneralDBConnection() throws SQLException {
+        return DriverManager.getConnection(DB_GENERAL_URL);
+    }
 
-            while (rs.next()) {
-                String equipos = rs.getString("equipos");
-                if (equipos != null) {
-                    // Verificar si contiene bocinas específicas
-                    if (equipos.contains("Bocina 1")) bocinasOcupadas++;
-                    if (equipos.contains("Bocina 2")) bocinasOcupadas++;
-                    if (equipos.contains("Bocina 3")) bocinasOcupadas++;
-                    // También verificar si dice solo "Bocinas" (las 3 juntas)
-                    if (equipos.contains("Bocinas") && !equipos.contains("Bocina 1") &&
-                            !equipos.contains("Bocina 2") && !equipos.contains("Bocina 3")) {
-                        bocinasOcupadas = 3; // Si dice "Bocinas", asumimos que son las 3
+    private static void crearTablaGeneral(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS prestamos (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "alumno_nombre TEXT NOT NULL, " +
+                "profesor_nombre TEXT NOT NULL, " +
+                "equipos TEXT NOT NULL, " +
+                "hora_prestamo TEXT NOT NULL, " +
+                "fecha DATE, " +
+                "salon TEXT, " +
+                "devuelto BOOLEAN, " +
+                "hora_devolucion TEXT, " +
+                "observaciones TEXT" +
+                ")";
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+
+
+    public static void guardarYLimpiarPrestamos() throws SQLException {
+        try (Connection connPrincipal = getConnection();
+             Connection connGeneral = getGeneralDBConnection()) {
+
+            connGeneral.setAutoCommit(false); // Iniciar transacción en la base general
+            crearTablaGeneral(connGeneral);
+
+            String selectSql = "SELECT alumno_nombre, profesor_nombre, equipos, hora_prestamo, fecha, salon, devuelto, hora_devolucion, observaciones FROM prestamos";
+            String insertSql = "INSERT INTO prestamos (alumno_nombre, profesor_nombre, equipos, hora_prestamo, fecha, salon, devuelto, hora_devolucion, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String deleteSql = "DELETE FROM prestamos";
+
+            try (Statement stmtSelect = connPrincipal.createStatement();
+                 ResultSet rs = stmtSelect.executeQuery(selectSql);
+                 PreparedStatement pstmtInsert = connGeneral.prepareStatement(insertSql);
+                 Statement stmtDelete = connPrincipal.createStatement()) {
+
+                int rowCount = 0;
+                while (rs.next()) {
+                    pstmtInsert.setString(1, rs.getString("alumno_nombre"));
+                    pstmtInsert.setString(2, rs.getString("profesor_nombre"));
+                    pstmtInsert.setString(3, rs.getString("equipos"));
+                    pstmtInsert.setString(4, rs.getString("hora_prestamo"));
+                    pstmtInsert.setString(5, rs.getString("fecha"));
+                    pstmtInsert.setString(6, rs.getString("salon"));
+                    pstmtInsert.setBoolean(7, rs.getBoolean("devuelto"));
+                    pstmtInsert.setString(8, rs.getString("hora_devolucion"));
+                    pstmtInsert.setString(9, rs.getString("observaciones"));
+                    pstmtInsert.addBatch();
+                    rowCount++;
+                }
+
+                if (rowCount > 0) {
+                    pstmtInsert.executeBatch();
+                }
+
+                connGeneral.commit(); // Confirmar la transacción
+                stmtDelete.execute(deleteSql);
+            } catch (SQLException e) {
+                connGeneral.rollback(); // Deshacer en caso de error
+                throw e;
+            }
+        }
+    }
+
+    public static void exportarGeneralToCSV(String filePath) throws SQLException, IOException {
+        String sql = "SELECT * FROM prestamos";
+        try (Connection conn = getGeneralDBConnection()) {
+            try (Statement stmt = conn.createStatement()) {
+                try (ResultSet rs = stmt.executeQuery(sql)) {
+                    try (FileWriter writer = new FileWriter(filePath)) {
+
+                        // Escribir encabezados del CSV
+                        ResultSetMetaData metaData = rs.getMetaData();
+                        int columnCount = metaData.getColumnCount();
+                        for (int i = 1; i <= columnCount; i++) {
+                            writer.append(metaData.getColumnName(i));
+                            if (i < columnCount) {
+                                writer.append(",");
+                            }
+                        }
+                        writer.append("\n");
+
+                        // Escribir datos
+                        while (rs.next()) {
+                            for (int i = 1; i <= columnCount; i++) {
+                                String value = rs.getString(i);
+                                // Manejar valores nulos y comas en el texto
+                                if (value == null) {
+                                    writer.append("\"\"");
+                                } else {
+                                    value = value.replace("\"", "\"\"");
+                                    writer.append("\"" + value + "\"");
+                                }
+                                if (i < columnCount) {
+                                    writer.append(",");
+                                }
+                            }
+                            writer.append("\n");
+                        }
                     }
                 }
             }
-
-            // Disponibles si hay menos de 3 bocinas ocupadas
-            return bocinasOcupadas < 3;
-
-        } catch (SQLException e) {
-            System.err.println("Error al verificar bocinas: " + e.getMessage());
-            return false;
         }
     }
 }

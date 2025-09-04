@@ -3,10 +3,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,12 +32,12 @@ public class PrestamoForm extends JPanel {
     // Clase interna para fuentes (version responsive)
     private static class AppFonts {
         // Tamaños base de fuente
-        private static final int BASE_TITLE = 28;
-        private static final int BASE_SUBTITLE = 16;
-        private static final int BASE_BODY = 15;
-        private static final int BASE_CAPTION = 13;
-        private static final int BASE_BUTTON = 15;
-        private static final int BASE_LABEL = 14;
+        private static final int BASE_TITLE = 32;
+        private static final int BASE_SUBTITLE = 20;
+        private static final int BASE_BODY = 17;
+        private static final int BASE_CAPTION = 17;
+        private static final int BASE_BUTTON = 17;
+        private static final int BASE_LABEL = 16;
 
         // Fuentes escaladas dinámicamente
         public static final Font TITLE = new Font("Segoe UI", Font.BOLD,
@@ -70,7 +67,6 @@ public class PrestamoForm extends JPanel {
 
     private JFrame parentFrame;
     private JTextField txtNombreAlumno;
-    private JTextField txtMatricula;
     private JTextField txtProfesor;
     private JCheckBox[] chkLaptops;
     private JCheckBox[] chkProyectores;
@@ -82,7 +78,7 @@ public class PrestamoForm extends JPanel {
     private JPanel statusPanel;
     private JPanel laptopsPanel;
     private JPanel proyectoresPanel;
-    private JCheckBox chkBocinas;
+    private JCheckBox[] chkBocinas;
     private JPanel bocinasPanel;
 
     public PrestamoForm(JFrame parent) {
@@ -91,6 +87,7 @@ public class PrestamoForm extends JPanel {
         configurarPanelesResponsive();
         configurarLayout();
         configurarEventos();
+        configurarTeclaEnter();
         configurarValidacion();
         actualizarEquiposDisponibles();
         mostrarMensajeBienvenida();
@@ -102,7 +99,6 @@ public class PrestamoForm extends JPanel {
 
         // Campos de texto mejorados
         txtNombreAlumno = crearCampoTextoEstilizado(20);
-        txtMatricula = crearCampoTextoEstilizado(15);
         txtProfesor = crearCampoTextoEstilizado(20);
         txtSalon = crearCampoTextoEstilizado(12);
 
@@ -168,22 +164,29 @@ public class PrestamoForm extends JPanel {
         }
 
 // Crear checkbox para bocinas - TAMAÑO FIJO
-        chkBocinas = new JCheckBox("Bocinas");
-        chkBocinas.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        chkBocinas.setBackground(AppColors.SURFACE);
-        chkBocinas.setPreferredSize(new Dimension(160, 32)); // Tamaño fijo
+        // Inicializar checkboxes para bocinas
+        chkBocinas = new JCheckBox[5];
 
-        bocinasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+// Crear checkboxes para bocinas (más compactos) - TAMAÑO FIJO
+        bocinasPanel = new JPanel(new GridLayout(2, 3, 15, 15));
         bocinasPanel.setBackground(AppColors.SURFACE);
         bocinasPanel.setBorder(new CompoundBorder(
                 new LineBorder(AppColors.BORDER, 1, true),
-                new EmptyBorder(6, 10, 10, 10)
+                new EmptyBorder(8, 10, 8, 10)
         ));
 // Establecer tamaño fijo desde el inicio
-        bocinasPanel.setPreferredSize(new Dimension(380, 55));
-        bocinasPanel.setMinimumSize(new Dimension(300, 45));
-        bocinasPanel.setMaximumSize(new Dimension(300, 45));
-        bocinasPanel.add(chkBocinas);
+        bocinasPanel.setPreferredSize(new Dimension(380, 80));
+        bocinasPanel.setMinimumSize(new Dimension(400, 70));
+        bocinasPanel.setMaximumSize(new Dimension(400, 70));
+
+        for (int i = 0; i < 5; i++) {
+            chkBocinas[i] = new JCheckBox("Bocina " + (i + 1));
+            chkBocinas[i].setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            chkBocinas[i].setBackground(AppColors.SURFACE);
+            // Establecer tamaño fijo para cada checkbox
+            chkBocinas[i].setPreferredSize(new Dimension(120, 32));
+            bocinasPanel.add(chkBocinas[i]);
+        }
 
         // Botones mejorados
         btnPrestar = crearBotonPrincipal(ICON_SAVE + " REGISTRAR PRÉSTAMO", AppColors.SECONDARY);
@@ -401,9 +404,8 @@ public class PrestamoForm extends JPanel {
         columna.add(Box.createVerticalStrut(10));
 
         columna.add(crearCampoFormulario("Nombre Completo", ICON_USER, txtNombreAlumno));
-        columna.add(crearCampoFormulario("Matrícula", ICON_ID, txtMatricula));
         columna.add(crearCampoFormulario("Profesor", ICON_TEACHER, txtProfesor));
-        columna.add(crearCampoFormulario("Salón/Ubicación", ICON_ROOM, txtSalon));
+        columna.add(crearCampoFormulario("Grupo", ICON_ROOM, txtSalon));
 
         columna.add(Box.createVerticalStrut(15));
 
@@ -491,6 +493,25 @@ public class PrestamoForm extends JPanel {
         // Agregar validación de checkboxes
         configurarValidacionCheckboxes();
     }
+    private void configurarTeclaEnter() {
+        // Configurar Enter para activar el botón de préstamo
+        KeyStroke enterKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+
+        // Crear la acción
+        Action enterAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnPrestar.isEnabled()) {
+                    procesarPrestamo();
+                }
+            }
+        };
+
+        // Mapear la tecla Enter a la acción
+        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(enterKeyStroke, "enterPressed");
+        this.getActionMap().put("enterPressed", enterAction);
+    }
+
 
     private void configurarValidacionCheckboxes() {
         // Validación para laptops - solo una seleccionada
@@ -522,6 +543,20 @@ public class PrestamoForm extends JPanel {
                 }
             });
         }
+        // Validación para bocinas - solo una seleccionada
+        for (int i = 0; i < chkBocinas.length; i++) {
+            final int index = i;
+            chkBocinas[i].addActionListener(e -> {
+                if (chkBocinas[index].isSelected()) {
+                    // Deseleccionar todas las otras bocinas
+                    for (int j = 0; j < chkBocinas.length; j++) {
+                        if (j != index) {
+                            chkBocinas[j].setSelected(false);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     private void configurarValidacion() {
@@ -529,62 +564,9 @@ public class PrestamoForm extends JPanel {
         configurarValidacionTexto(txtNombreAlumno, "Nombre requerido");
         configurarValidacionTexto(txtProfesor, "Profesor requerido");
 
-        // Mantener la validación especial de matrícula:
-        configurarValidacionMatricula(txtMatricula, "Matrícula requerida y solo números");
 
         // Salón puede tener números y letras, solo convertir a mayúsculas:
         configurarValidacionSalon(txtSalon, "Salón requerido");
-    }
-    private void configurarValidacionMatricula(JTextField campo, String mensajeError) {
-        campo.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                validarMatriculaVisual(campo);
-            }
-        });
-
-        campo.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyTyped(java.awt.event.KeyEvent e) {
-                char c = e.getKeyChar();
-                String textoActual = campo.getText();
-
-                // Permitir solo números y teclas de control
-                if (!Character.isDigit(c) && !Character.isISOControl(c)) {
-                    e.consume();
-                    return;
-                }
-
-                // Limitar a 8 dígitos máximo
-                if (Character.isDigit(c) && textoActual.length() >= 8) {
-                    e.consume();
-                }
-            }
-
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                validarMatriculaVisual(campo);
-            }
-        });
-    }
-
-    private void validarMatriculaVisual(JTextField campo) {
-        String texto = campo.getText().trim();
-        boolean esValido = !texto.isEmpty() &&
-                texto.matches("\\d+") &&
-                texto.length() <= 8;
-
-        if (esValido) {
-            campo.setBorder(new CompoundBorder(
-                    new LineBorder(AppColors.SECONDARY, 1, true),
-                    new EmptyBorder(6, 10, 6, 10)
-            ));
-        } else {
-            campo.setBorder(new CompoundBorder(
-                    new LineBorder(AppColors.DANGER, 1, true),
-                    new EmptyBorder(6, 10, 6, 10)
-            ));
-        }
     }
 
     private void configurarValidacionCampo(JTextField campo, String mensajeError) {
@@ -698,7 +680,6 @@ public class PrestamoForm extends JPanel {
                 // Crear objeto Prestamo
                 Prestamo prestamo = new Prestamo(
                         txtNombreAlumno.getText().trim(),
-                        txtMatricula.getText().trim(),
                         txtProfesor.getText().trim(),
                         equiposSeleccionados, // Equipos múltiples separados por coma
                         "", // Hora se asigna automáticamente
@@ -746,53 +727,14 @@ public class PrestamoForm extends JPanel {
             }
         }
 
-        // Agregar bocinas - encontrar la primera disponible
-        if (chkBocinas.isSelected()) {
-            String bocinaAsignada = obtenerSiguienteBocinaDisponible();
-            if (bocinaAsignada != null) {
-                equipos.add(bocinaAsignada);
+        // Agregar bocinas seleccionadas
+        for (int i = 0; i < chkBocinas.length; i++) {
+            if (chkBocinas[i].isSelected()) {
+                equipos.add("Bocina " + (i + 1));
             }
         }
 
         return String.join(", ", equipos);
-    }
-
-    private String obtenerSiguienteBocinaDisponible() {
-        // Verificar qué bocinas están disponibles - SIN FILTRO DE FECHA
-        String sql = "SELECT equipos FROM prestamos WHERE devuelto = 0";
-
-        boolean[] bocinasOcupadas = new boolean[3]; // Para bocinas 1, 2, 3
-
-        try (Connection conn = ConexionDB.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                String equipos = rs.getString("equipos");
-                if (equipos != null) {
-                    if (equipos.contains("Bocina 1")) bocinasOcupadas[0] = true;
-                    if (equipos.contains("Bocina 2")) bocinasOcupadas[1] = true;
-                    if (equipos.contains("Bocina 3")) bocinasOcupadas[2] = true;
-                    // Si dice "Bocinas" genérico, marcar todas como ocupadas
-                    if (equipos.contains("Bocinas") && !equipos.contains("Bocina 1") &&
-                            !equipos.contains("Bocina 2") && !equipos.contains("Bocina 3")) {
-                        bocinasOcupadas[0] = bocinasOcupadas[1] = bocinasOcupadas[2] = true;
-                    }
-                }
-            }
-
-            // Devolver la primera bocina disponible
-            for (int i = 0; i < 3; i++) {
-                if (!bocinasOcupadas[i]) {
-                    return "Bocina " + (i + 1);
-                }
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al obtener bocina disponible: " + e.getMessage());
-        }
-
-        return null; // No hay bocinas disponibles
     }
 
     private void mostrarNotificacionExito(String equipos) {
@@ -850,20 +792,6 @@ public class PrestamoForm extends JPanel {
             txtNombreAlumno.requestFocus();
             return false;
         }
-        if (txtMatricula.getText().trim().isEmpty()) {
-            mostrarError("La matrícula es obligatoria");
-            txtMatricula.requestFocus();
-            return false;
-        }
-
-        if (!txtMatricula.getText().trim().matches("\\d{1,8}")) {
-            mostrarError("La matrícula debe contener entre 1 y 8 números únicamente");
-            txtMatricula.requestFocus();
-            return false;
-        }
-
-
-
 
         if (txtProfesor.getText().trim().isEmpty()) {
             mostrarError("El nombre del profesor es obligatorio");
@@ -899,7 +827,16 @@ public class PrestamoForm extends JPanel {
             }
         }
 
-        if (!tieneSeleccion && !chkBocinas.isSelected()) {
+        if (!tieneSeleccion) {
+            for (JCheckBox chk : chkBocinas) {
+                if (chk.isSelected()) {
+                    tieneSeleccion = true;
+                    break;
+                }
+            }
+        }
+
+        if (!tieneSeleccion) {
             mostrarError("Debe seleccionar al menos un equipo (laptop, proyector o bocinas)");
             return false;
         }
@@ -913,7 +850,6 @@ public class PrestamoForm extends JPanel {
 
     private void limpiarFormulario() {
         txtNombreAlumno.setText("");
-        txtMatricula.setText("");
         txtProfesor.setText("");
         txtSalon.setText("");
         txtObservaciones.setText("");
@@ -925,11 +861,14 @@ public class PrestamoForm extends JPanel {
         for (JCheckBox chk : chkProyectores) {
             chk.setSelected(false);
         }
-        // Agregar después de limpiar proyectores:
-        chkBocinas.setSelected(false);
+
+        // Limpiar bocinas
+        for (JCheckBox chk : chkBocinas) {
+            chk.setSelected(false);
+        }
 
         // Resetear bordes
-        JTextField[] campos = {txtNombreAlumno, txtMatricula, txtProfesor, txtSalon};
+        JTextField[] campos = {txtNombreAlumno, txtProfesor, txtSalon};
         for (JTextField campo : campos) {
             campo.setBorder(new CompoundBorder(
                     new LineBorder(AppColors.BORDER, 1, true),
@@ -973,21 +912,30 @@ public class PrestamoForm extends JPanel {
             }
         }
 
-        // Verificar disponibilidad de bocinas - MANTENER TAMAÑO FIJO
-        boolean bocinasDisponibles = ConexionDB.bocinasDisponibles();
-
-        chkBocinas.setEnabled(bocinasDisponibles);
-        if (!bocinasDisponibles) {
-            chkBocinas.setSelected(false);
-            chkBocinas.setText("Bocinas (No disp.)"); // Texto más corto
-            chkBocinas.setForeground(AppColors.TEXT_SECONDARY);
-        } else {
-            chkBocinas.setText("Bocinas");
-            chkBocinas.setForeground(AppColors.TEXT_PRIMARY);
+        // Actualizar bocinas - MANTENER TAMAÑO FIJO
+        for (int i = 0; i < chkBocinas.length; i++) {
+            String nombreBocina = "Bocina " + (i + 1);
+            boolean disponible = equiposDisponibles.contains(nombreBocina);
+            chkBocinas[i].setEnabled(disponible);
+            if (!disponible) {
+                chkBocinas[i].setSelected(false);
+                chkBocinas[i].setText("B" + (i + 1) + " (No disp.)"); // Texto más corto
+                chkBocinas[i].setForeground(AppColors.TEXT_SECONDARY);
+            } else {
+                chkBocinas[i].setText("Bocina " + (i + 1));
+                chkBocinas[i].setForeground(AppColors.TEXT_PRIMARY);
+            }
         }
 
-        // Verificar si hay equipos disponibles
-        boolean hayDisponibles = !equiposDisponibles.isEmpty() || bocinasDisponibles;
+// Verificar si hay equipos disponibles (incluyendo bocinas)
+        boolean hayBocinasDisponibles = false;
+        for (JCheckBox chk : chkBocinas) {
+            if (chk.isEnabled()) {
+                hayBocinasDisponibles = true;
+                break;
+            }
+        }
+        boolean hayDisponibles = !equiposDisponibles.isEmpty() || hayBocinasDisponibles;
         btnPrestar.setEnabled(hayDisponibles);
 
         if (!hayDisponibles) {
@@ -999,6 +947,10 @@ public class PrestamoForm extends JPanel {
     }
 
     private void abrirPanelAdmin() {
+        // GUARDAR el tamaño y posición actuales
+        Dimension originalSize = parentFrame.getSize();
+        Point originalLocation = parentFrame.getLocation();
+
         // Ocultar la ventana principal
         parentFrame.setVisible(false);
 
@@ -1009,6 +961,10 @@ public class PrestamoForm extends JPanel {
         adminPanel.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent windowEvent) {
+                // RESTAURAR el tamaño y posición originales
+                parentFrame.setSize(originalSize);
+                parentFrame.setLocation(originalLocation);
+
                 // Mostrar nuevamente la ventana principal
                 parentFrame.setVisible(true);
                 actualizarEquiposDisponibles();
@@ -1102,8 +1058,10 @@ public class PrestamoForm extends JPanel {
         proyectoresPanel.setMinimumSize(new Dimension(300, 80));
 
         // Configurar panel de bocinas
+        // Configurar panel de bocinas
+
         bocinasPanel.setPreferredSize(new Dimension(panelWidth, speakerPanelHeight));
-        bocinasPanel.setMinimumSize(new Dimension(200, 40));
+        bocinasPanel.setMinimumSize(new Dimension(300, 60));
 
         // Configurar área de observaciones
         int textAreaHeight = Math.max(70, (int)(70 * Math.sqrt(scaleFactor)));

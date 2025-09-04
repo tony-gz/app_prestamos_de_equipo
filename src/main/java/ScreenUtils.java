@@ -59,30 +59,25 @@ public class ScreenUtils {
         System.out.println("===============================");
     }
 
-    // Configurar ventana con tamaños responsive
     public static void setupResponsiveWindow(JFrame frame,
                                              double widthPercent,
                                              double heightPercent,
                                              double minWidthPercent,
                                              double minHeightPercent) {
 
-        // Tamaño preferido
-        Dimension preferredSize = calculateWindowSize(widthPercent, heightPercent);
-        frame.setSize(preferredSize);
+        // Configurar pantalla completa maximizada
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // Tamaño mínimo
+        // Tamaño mínimo responsive (por si el usuario restaura la ventana)
         Dimension minimumSize = calculateMinimumSize(minWidthPercent, minHeightPercent);
         frame.setMinimumSize(minimumSize);
-
-        // Centrar en pantalla
-        frame.setLocationRelativeTo(null);
 
         // Permitir redimensionar
         frame.setResizable(true);
 
         // Imprimir info para debugging
         printScreenInfo();
-        System.out.println("Ventana configurada: " + preferredSize.width + "x" + preferredSize.height);
+        System.out.println("Ventana configurada: PANTALLA COMPLETA");
         System.out.println("Tamaño mínimo: " + minimumSize.width + "x" + minimumSize.height);
     }
 }

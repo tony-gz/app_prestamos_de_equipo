@@ -40,12 +40,12 @@ public class AdminPanel extends JFrame {
     // También agregar la clase AppFonts responsive al AdminPanel:
     private static class AppFonts {
         // Tamaños base de fuente
-        private static final int BASE_TITLE = 24;
-        private static final int BASE_SUBTITLE = 16;
-        private static final int BASE_BODY = 13;
-        private static final int BASE_CAPTION = 11;
-        private static final int BASE_BUTTON = 13;
-        private static final int BASE_LABEL = 12;
+        private static final int BASE_TITLE = 28;
+        private static final int BASE_SUBTITLE = 20;
+        private static final int BASE_BODY = 16;
+        private static final int BASE_CAPTION = 16;
+        private static final int BASE_BUTTON = 16;
+        private static final int BASE_LABEL = 15;
 
         // Fuentes escaladas dinámicamente
         public static final Font TITLE = new Font("Segoe UI", Font.BOLD,
@@ -68,6 +68,7 @@ public class AdminPanel extends JFrame {
     private JCheckBox chkSoloActivos;
     private JLabel lblEstadisticas;
     private JButton btnRegresar;
+    private JButton btnAdminDB;
 
     private Timer inactivityTimer;
     private final int INACTIVITY_TIMEOUT = 60000;
@@ -106,7 +107,7 @@ public class AdminPanel extends JFrame {
 
         // Configuración responsive de la ventana
         // 80% ancho, 75% alto de la pantalla, mínimo 70% ancho, 65% alto
-        ScreenUtils.setupResponsiveWindow(this, 0.80, 0.75, 0.70, 0.65);
+        ScreenUtils.setupResponsiveWindow(this, 0.75, 0.85, 0.60, 0.70);
 
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -172,15 +173,79 @@ public class AdminPanel extends JFrame {
             }
         });
 
+        // Nuevo botón para la administración de la base de datos
+        // Nuevo botón para la administración de la base de datos
+        btnAdminDB = new JButton("Administración DB");
+        btnAdminDB.setFont(AppFonts.BUTTON);
+        btnAdminDB.setBackground(AppColors.SECONDARY);
+        btnAdminDB.setForeground(Color.WHITE);
+        btnAdminDB.setPreferredSize(new Dimension(200, 45));
+        btnAdminDB.setBorder(new CompoundBorder(
+                new LineBorder(AppColors.SECONDARY, 2, true),
+                new EmptyBorder(5, 5, 5, 5)
+        ));
+        btnAdminDB.setFocusPainted(false);
+        btnAdminDB.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAdminDB.setToolTipText("Administrar y exportar base de datos");
+        btnAdminDB.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btnAdminDB.setBackground(AppColors.SUCCESS_BG);
+                btnAdminDB.setForeground(AppColors.SECONDARY);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btnAdminDB.setBackground(AppColors.SECONDARY);
+                btnAdminDB.setForeground(Color.WHITE);
+            }
+        });
+        btnAdminDB.addActionListener(new ActionListener() {
+            // Define la contraseña de administrador
+            private static final String ADMIN_PASSWORD = "prepa36"; // ¡Cambia esta contraseña!
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Crea un campo de contraseña
+                JPasswordField passwordField = new JPasswordField();
+
+                // Muestra un diálogo de entrada de contraseña
+                int option = JOptionPane.showConfirmDialog(
+                        AdminPanel.this,
+                        passwordField,
+                        "Ingresa la contraseña de administrador:",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE
+                );
+
+                // Valida la contraseña si el usuario presiona OK
+                if (option == JOptionPane.OK_OPTION) {
+                    String enteredPassword = new String(passwordField.getPassword());
+                    if (enteredPassword.equals(ADMIN_PASSWORD)) {
+                        // Contraseña correcta: abre el panel de gestión de datos
+                        new DataManagementPanel(AdminPanel.this).setVisible(true);
+                    } else {
+                        // Contraseña incorrecta: muestra un mensaje de error
+                        JOptionPane.showMessageDialog(
+                                AdminPanel.this,
+                                "Contraseña incorrecta. Acceso denegado.",
+                                "Error de autenticación",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                }
+            }
+        });
+
         String[] columnas = {
-                "ID", "Alumno", "Matrícula", "Profesor", "Equipos",
+                "ID", "Alumno", "Profesor", "Equipos",
                 "Fecha", "H. Préstamo", "Salón", "Estado", "H. Devolución", "Acción"
         };
 
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 10;
+                return column == 9; // Solo la columna de acción es editable
             }
         };
 
@@ -200,24 +265,23 @@ public class AdminPanel extends JFrame {
         tablaPrestamos.getTableHeader().setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
         // Ajustes de ancho de columnas
-        tablaPrestamos.getColumnModel().getColumn(0).setPreferredWidth(40);
+        tablaPrestamos.getColumnModel().getColumn(0).setPreferredWidth(35);
         tablaPrestamos.getColumnModel().getColumn(1).setPreferredWidth(150);
-        tablaPrestamos.getColumnModel().getColumn(2).setPreferredWidth(90);
-        tablaPrestamos.getColumnModel().getColumn(3).setPreferredWidth(120);
-        tablaPrestamos.getColumnModel().getColumn(4).setPreferredWidth(200);
+        tablaPrestamos.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tablaPrestamos.getColumnModel().getColumn(3).setPreferredWidth(210);
+        tablaPrestamos.getColumnModel().getColumn(4).setPreferredWidth(80);
         tablaPrestamos.getColumnModel().getColumn(5).setPreferredWidth(80);
         tablaPrestamos.getColumnModel().getColumn(6).setPreferredWidth(80);
         tablaPrestamos.getColumnModel().getColumn(7).setPreferredWidth(80);
         tablaPrestamos.getColumnModel().getColumn(8).setPreferredWidth(70);
-        tablaPrestamos.getColumnModel().getColumn(9).setPreferredWidth(90);
-        tablaPrestamos.getColumnModel().getColumn(10).setPreferredWidth(100);
+        tablaPrestamos.getColumnModel().getColumn(9).setPreferredWidth(100);
 
         // Aplica el renderizador para el color de estado y el botón de acción
-        tablaPrestamos.getColumnModel().getColumn(8).setCellRenderer(new EstadoCellRenderer());
-        tablaPrestamos.getColumnModel().getColumn(10).setCellRenderer(new ButtonRenderer(this));
-        tablaPrestamos.getColumnModel().getColumn(10).setCellEditor(new ButtonEditor(tablaPrestamos, this));
+        tablaPrestamos.getColumnModel().getColumn(7).setCellRenderer(new EstadoCellRenderer());
+        tablaPrestamos.getColumnModel().getColumn(9).setCellRenderer(new ButtonRenderer());
+        tablaPrestamos.getColumnModel().getColumn(9).setCellEditor(new ButtonEditor(new JCheckBox()));
         tablaPrestamos.setRowSelectionAllowed(false);
-        tablaPrestamos.getColumnModel().getColumn(10).setResizable(false);
+        tablaPrestamos.getColumnModel().getColumn(9).setResizable(false);
         tablaPrestamos.setCellSelectionEnabled(true);
     }
 
@@ -235,7 +299,7 @@ public class AdminPanel extends JFrame {
             }
 
             // Si la columna es la de estado, aplicar la lógica de color
-            int estadoColumnIndex = 8; // La columna de estado es la 8
+            int estadoColumnIndex = 7; // La columna de estado es la 8
             if (column == estadoColumnIndex) {
                 Object estadoValue = table.getValueAt(row, estadoColumnIndex);
                 if (estadoValue != null && "Activo".equals(estadoValue.toString())) {
@@ -249,10 +313,7 @@ public class AdminPanel extends JFrame {
     }
 
     class ButtonRenderer extends JButton implements TableCellRenderer {
-        private AdminPanel adminPanel;
-
-        public ButtonRenderer(AdminPanel adminPanel) {
-            this.adminPanel = adminPanel;
+        public ButtonRenderer() {
             setOpaque(true);
             setFont(new Font("Segoe UI", Font.BOLD, 12));
         }
@@ -261,7 +322,7 @@ public class AdminPanel extends JFrame {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus,
                                                        int row, int column) {
-            String estado = (String) table.getValueAt(row, 8);
+            String estado = (String) table.getValueAt(row, 7);
             if ("Activo".equals(estado)) {
                 setText("DEVOLVER");
                 setBackground(AppColors.SECONDARY);
@@ -280,64 +341,196 @@ public class AdminPanel extends JFrame {
     }
 
     class ButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private JTable table;
-        private AdminPanel adminPanel;
+        private final JButton button = new JButton("Devolver");
+        private String label;
+        private boolean isPushed;
+        private int row;
+        private JTable table; // Agregar referencia a la tabla
 
-        public ButtonEditor(JTable table, AdminPanel adminPanel) {
-            super(new JCheckBox());
-            this.table = table;
-            this.adminPanel = adminPanel;
-            this.button = new JButton();
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            setClickCountToStart(1);
             button.setOpaque(true);
             button.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
             button.addActionListener(e -> {
-                int selectedRow = table.getEditingRow();
-                if (selectedRow != -1) {
-                    adminPanel.procesarDevolucionFila(selectedRow);
-                    fireEditingStopped();
-                }
+                fireEditingStopped();
             });
         }
+
         @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            String estado = (String) table.getValueAt(row, 8);
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            this.row = row;
+            this.table = table; // Guardar referencia a la tabla
+
+            // Validar que el row sea válido ANTES de cualquier conversión
+            if (row < 0 || row >= table.getRowCount()) {
+                return button;
+            }
+
+            String estado = null;
+            try {
+                // Obtener el estado de manera segura
+                estado = (String) table.getValueAt(row, 7);
+            } catch (Exception ex) {
+                System.err.println("Error al obtener estado de la fila " + row + ": " + ex.getMessage());
+                return button;
+            }
+
             if ("Activo".equals(estado)) {
-                button.setText("DEVOLVER");
+                label = "DEVOLVER";
+                button.setText(label);
                 button.setBackground(AppColors.SECONDARY);
                 button.setForeground(Color.WHITE);
                 button.setEnabled(true);
                 button.setBorder(new EmptyBorder(5, 10, 5, 10));
             } else {
-                button.setText("DEVUELTO");
+                label = "DEVUELTO";
+                button.setText(label);
                 button.setBackground(AppColors.TEXT_SECONDARY);
                 button.setForeground(Color.WHITE);
                 button.setEnabled(false);
                 button.setBorder(new EmptyBorder(5, 10, 5, 10));
             }
+
+            isPushed = true;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            return "Devolver";
+            if (isPushed && button.isEnabled() && table != null) {
+                // Validar que el row sea válido antes de procesar
+                if (row >= 0 && row < table.getRowCount()) {
+                    try {
+                        // Procesar la devolución usando el índice de la tabla (no del modelo)
+                        procesarDevolucionDesdeEditor(table, row);
+                    } catch (Exception ex) {
+                        System.err.println("Error al procesar devolución: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                }
+            }
+            isPushed = false;
+            return label;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
         }
     }
 
-    private void procesarDevolucionFila(int fila) {
-        if (fila < 0) return;
-        int filaReal = tablaPrestamos.convertRowIndexToModel(fila);
-        int prestamoId = (Integer) modeloTabla.getValueAt(filaReal, 0);
-        String alumno = (String) modeloTabla.getValueAt(filaReal, 1);
-        String equipos = (String) modeloTabla.getValueAt(filaReal, 4);
-        String estado = (String) modeloTabla.getValueAt(filaReal, 8);
+    private void procesarDevolucionDesdeEditor(JTable table, int filaTabla) {
+        if (filaTabla < 0 || table == null || filaTabla >= table.getRowCount()) {
+            System.err.println("Fila inválida: " + filaTabla + ", total filas: " +
+                    (table != null ? table.getRowCount() : "tabla nula"));
+            return;
+        }
+
+        try {
+            // Convertir índice de tabla a índice de modelo de manera segura
+            int filaModelo;
+            if (table.getRowSorter() != null) {
+                try {
+                    filaModelo = table.convertRowIndexToModel(filaTabla);
+                } catch (IndexOutOfBoundsException e) {
+                    System.err.println("Error al convertir índice de fila " + filaTabla +
+                            " con " + table.getRowCount() + " filas visibles");
+                    return;
+                }
+            } else {
+                filaModelo = filaTabla;
+            }
+
+            // Validar que el índice del modelo sea válido
+            if (filaModelo < 0 || filaModelo >= modeloTabla.getRowCount()) {
+                System.err.println("Índice de modelo inválido: " + filaModelo +
+                        ", total filas modelo: " + modeloTabla.getRowCount());
+                return;
+            }
+
+            int prestamoId = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+            String alumno = (String) modeloTabla.getValueAt(filaModelo, 1);
+            String equipos = (String) modeloTabla.getValueAt(filaModelo, 3);
+            String estado = (String) modeloTabla.getValueAt(filaModelo, 7);
+
+            if (!"Activo".equals(estado)) {
+                return;
+            }
+
+            LocalTime horaActual = LocalTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+            String horaDevolucionTexto = horaActual.format(formatter);
+
+            int respuesta = JOptionPane.showConfirmDialog(this,
+                    "<html><div style='font-family: Segoe UI; font-size: 13px;'>" +
+                            "¿Confirmar devolución de equipos?<br><br>" +
+                            "<b>Alumno:</b> " + alumno + "<br>" +
+                            "<b>Equipos:</b> " + equipos + "<br>" +
+                            "<b>Hora de devolución:</b> " + horaDevolucionTexto +
+                            "</div></html>",
+                    "Confirmar Devolución",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            if (respuesta == JOptionPane.YES_OPTION) {
+                if (ConexionDB.marcarComoDevuelto(prestamoId)) {
+                    JOptionPane.showMessageDialog(this,
+                            "<html><div style='font-family: Segoe UI; font-size: 13px;'>" +
+                                    "¡Equipos devueltos exitosamente!<br><br>" +
+                                    "<b>Equipos:</b> " + equipos + "<br>" +
+                                    "<b>Alumno:</b> " + alumno + "<br>" +
+                                    "<b>Hora de devolución:</b> " + horaDevolucionTexto +
+                                    "</div></html>",
+                            "Devolución Exitosa",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // Recargar datos de manera segura
+                    SwingUtilities.invokeLater(() -> {
+                        cargarDatos();
+                    });
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "<html><div style='font-family: Segoe UI; font-size: 13px;'>" +
+                                    "Error al procesar la devolución.<br>Intente nuevamente." +
+                                    "</div></html>",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "<html><div style='font-family: Segoe UI; font-size: 13px;'>" +
+                            "Error inesperado: " + e.getMessage() +
+                            "</div></html>",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void procesarDevolucionFila(int filaTabla) {
+        if (filaTabla < 0) return;
+
+        // Convertir índice de tabla a índice de modelo
+        int filaModelo = tablaPrestamos.convertRowIndexToModel(filaTabla);
+
+        int prestamoId = (Integer) modeloTabla.getValueAt(filaModelo, 0);
+        String alumno = (String) modeloTabla.getValueAt(filaModelo, 1);
+        String equipos = (String) modeloTabla.getValueAt(filaModelo, 3);
+        String estado = (String) modeloTabla.getValueAt(filaModelo, 7);
+
         if (!"Activo".equals(estado)) {
             return;
         }
+
         LocalTime horaActual = LocalTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         String horaDevolucionTexto = horaActual.format(formatter);
+
         int respuesta = JOptionPane.showConfirmDialog(this,
                 "<html><div style='font-family: Segoe UI; font-size: 13px;'>" +
                         "¿Confirmar devolución de equipos?<br><br>" +
@@ -348,6 +541,7 @@ public class AdminPanel extends JFrame {
                 "Confirmar Devolución",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
+
         if (respuesta == JOptionPane.YES_OPTION) {
             try {
                 if (ConexionDB.marcarComoDevuelto(prestamoId)) {
@@ -485,17 +679,27 @@ public class AdminPanel extends JFrame {
     }
 
     private JPanel crearFooter() {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(AppColors.SURFACE);
         footer.setBorder(new CompoundBorder(
                 BorderFactory.createMatteBorder(2, 0, 0, 0, AppColors.BORDER),
-                new EmptyBorder(12, 10, 12, 10)
+                new EmptyBorder(12, 25, 12, 25)
         ));
 
+        // Panel izquierdo para la etiqueta informativa
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        leftPanel.setBackground(AppColors.SURFACE);
         JLabel lblInfo = new JLabel("Selecciona el equipo a devolver usando el botón de la tabla");
         lblInfo.setForeground(AppColors.TEXT_SECONDARY);
         lblInfo.setFont(AppFonts.CAPTION);
-        footer.add(lblInfo);
+        leftPanel.add(lblInfo);
+        footer.add(leftPanel, BorderLayout.WEST);
+
+        // Panel derecho para los botones de acción
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        rightPanel.setBackground(AppColors.SURFACE);
+        rightPanel.add(btnAdminDB);
+        footer.add(rightPanel, BorderLayout.EAST);
 
         return footer;
     }
@@ -516,6 +720,7 @@ public class AdminPanel extends JFrame {
         });
     }
 
+
     private void cargarDatos() {
         try {
             modeloTabla.setRowCount(0);
@@ -524,7 +729,6 @@ public class AdminPanel extends JFrame {
                 Object[] fila = {
                         prestamo.getId(),
                         prestamo.getAlumnoNombre(),
-                        prestamo.getMatricula() != null ? prestamo.getMatricula() : "",
                         prestamo.getProfesorNombre(),
                         prestamo.getEquipo(),
                         prestamo.getFecha(),
@@ -558,7 +762,7 @@ public class AdminPanel extends JFrame {
             @Override
             public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
                 if (soloActivos) {
-                    String estado = entry.getStringValue(8);
+                    String estado = entry.getStringValue(7);
                     if (!"Activo".equals(estado)) {
                         return false;
                     }
@@ -577,6 +781,7 @@ public class AdminPanel extends JFrame {
         };
         sorter.setRowFilter(filtro);
     }
+
     private void actualizarEstadisticas() {
         try {
             String estadisticas = ConexionDB.getEstadisticas();
@@ -585,6 +790,7 @@ public class AdminPanel extends JFrame {
             lblEstadisticas.setText("Estadísticas no disponibles");
         }
     }
+
     private void configurarTimeoutInactividad() {
         inactivityTimer = new Timer(INACTIVITY_TIMEOUT, e -> {
             dispose();
@@ -593,6 +799,7 @@ public class AdminPanel extends JFrame {
         inactivityTimer.start();
         agregarListenersActividad(this);
     }
+
     private void agregarListenersActividad(Container container) {
         MouseMotionListener mouseMotionListener = new java.awt.event.MouseMotionAdapter() {
             @Override
@@ -622,6 +829,7 @@ public class AdminPanel extends JFrame {
         };
         aplicarListenersRecursivo(container, mouseMotionListener, mouseListener, keyListener);
     }
+
     private void aplicarListenersRecursivo(Container container,
                                            MouseMotionListener mouseMotionListener,
                                            MouseListener mouseListener,
@@ -639,16 +847,21 @@ public class AdminPanel extends JFrame {
             }
         }
     }
+
     private void reiniciarTimer() {
         if (inactivityTimer != null && inactivityTimer.isRunning()) {
             inactivityTimer.restart();
         }
     }
+
     @Override
     public void dispose() {
         if (inactivityTimer != null) {
             inactivityTimer.stop();
         }
         super.dispose();
+    }
+    public void recargarTabla() {
+        cargarDatos();
     }
 }
